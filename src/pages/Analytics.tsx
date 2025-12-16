@@ -153,7 +153,9 @@ const Analytics = () => {
                       data={categoryData}
                       dataKey="value"
                       outerRadius={100}
-                      label
+                      label={({ percent }) =>
+                        `${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {categoryData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
@@ -210,7 +212,7 @@ const Analytics = () => {
                   <XAxis dataKey="region" />
                   <YAxis />
                   <Tooltip />
-                  <Legend />
+                  {/* ❌ Legend removed */}
                   <Bar dataKey="sales" fill="hsl(var(--primary))" />
                   <Bar dataKey="growth" fill="hsl(var(--accent))" />
                 </BarChart>
