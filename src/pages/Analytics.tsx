@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* 🔗 BACKEND LINK (AS GIVEN BY YOU) */
+/* 🔗 NEW BACKEND LINK */
 const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 /* ---------------- Fallback Data ---------------- */
@@ -48,14 +48,8 @@ const Analytics = () => {
 
   const loadAnalytics = async () => {
     try {
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 15000); // Render sleep safety
-
-      const res = await fetch(`${BACKEND_URL}/analytics`, {
-        signal: controller.signal,
-      });
-
-      if (!res.ok) throw new Error("Backend not responding");
+      const res = await fetch(`${BACKEND_URL}/analytics`);
+      if (!res.ok) throw new Error("Failed to load analytics");
 
       const json = await res.json();
 
@@ -64,36 +58,31 @@ const Analytics = () => {
         setMonthlyOrders(json.monthlyOrders);
       }
 
-      /* -------- Sales vs Forecast -------- */
+      /* -------- Sales vs Forecast (Derived) -------- */
       if (json.regions?.length) {
         const totalSales = json.regions.reduce(
           (sum: number, r: any) => sum + r.sales,
           0
         );
 
-        setSalesData(
-          fallbackSalesData.map((m) => ({
-            month: m.month,
-            sales: Math.round(totalSales / 6),
-            forecast: Math.round((totalSales / 6) * 0.95),
-            orders:
-              json.monthlyOrders?.find((o: any) => o.month === m.month)
-                ?.orders ?? m.orders,
-          }))
-        );
+        const derived = fallbackSalesData.map((m) => ({
+          month: m.month,
+          sales: Math.round(totalSales / 6),
+          forecast: Math.round((totalSales / 6) * 0.95),
+          orders:
+            json.monthlyOrders?.find((o: any) => o.month === m.month)
+              ?.orders ?? m.orders,
+        }));
+
+        setSalesData(derived);
       }
 
-      /* -------- Categories (PERCENTAGE) -------- */
+      /* -------- Categories -------- */
       if (json.categories?.length) {
-        const total = json.categories.reduce(
-          (s: number, c: any) => s + c.value,
-          0
-        );
-
         setCategoryData(
           json.categories.map((c: any, i: number) => ({
             name: c.name,
-            value: total ? Number(((c.value / total) * 100).toFixed(1)) : 0,
+            value: c.value,
             color: COLORS[i % COLORS.length],
           }))
         );
@@ -110,7 +99,7 @@ const Analytics = () => {
         );
       }
     } catch (err) {
-      console.warn("Backend unreachable, using fallback data", err);
+      console.warn("Using fallback analytics data", err);
     }
   };
 
@@ -164,13 +153,13 @@ const Analytics = () => {
                       data={categoryData}
                       dataKey="value"
                       outerRadius={100}
-                      label={({ name, value }) => `${name} ${value}%`}
+                      label
                     >
                       {categoryData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v) => `${v}%`} />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </Card>
@@ -206,7 +195,7 @@ const Analytics = () => {
                 <BarChart data={categoryData}>
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(v) => `${v}%`} />
+                  <Tooltip />
                   <Bar dataKey="value" fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
