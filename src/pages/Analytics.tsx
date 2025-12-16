@@ -19,107 +19,103 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// NOTE: Humne API_BASE_URL import hata diya hai aur direct link use karenge
+/* 🔗 NEW BACKEND LINK */
+const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
+/* ---------------- Fallback Data ---------------- */
 const fallbackSalesData = [
-  { month: "Jan", sales: 12400, forecast: 11800, orders: 245 },
-  { month: "Feb", sales: 15600, forecast: 15200, orders: 312 },
-  { month: "Mar", sales: 18900, forecast: 18400, orders: 378 },
-  { month: "Apr", sales: 21200, forecast: 21800, orders: 424 },
-  { month: "May", sales: 24500, forecast: 24100, orders: 490 },
-  { month: "Jun", sales: 27800, forecast: 28200, orders: 556 },
+  { month: "Jan", sales: 12000, forecast: 11500, orders: 200 },
+  { month: "Feb", sales: 15000, forecast: 14500, orders: 260 },
+  { month: "Mar", sales: 18000, forecast: 17500, orders: 320 },
+  { month: "Apr", sales: 21000, forecast: 20500, orders: 380 },
+  { month: "May", sales: 24000, forecast: 23500, orders: 450 },
+  { month: "Jun", sales: 27000, forecast: 26500, orders: 520 },
 ];
 
-const fallbackCategoryData = [
-  { name: "Electronics", value: 35, color: "hsl(var(--chart-1))" },
-  { name: "Clothing", value: 25, color: "hsl(var(--chart-2))" },
-  { name: "Food", value: 20, color: "hsl(var(--chart-3))" },
-  { name: "Home", value: 15, color: "hsl(var(--chart-4))" },
-  { name: "Sports", value: 5, color: "hsl(var(--chart-5))" },
-];
-
-const fallbackRegionData = [
-  { region: "North", sales: 45200, growth: 12 },
-  { region: "South", sales: 38900, growth: 8 },
-  { region: "East", sales: 52100, growth: 15 },
-  { region: "West", sales: 41800, growth: 10 },
-  { region: "Central", sales: 35600, growth: 6 },
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
 ];
 
 const Analytics = () => {
   const [salesData, setSalesData] = useState<any[]>(fallbackSalesData);
-  const [categoryData, setCategoryData] = useState<any[]>(fallbackCategoryData);
-  const [regionData, setRegionData] = useState<any[]>(fallbackRegionData);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [regionData, setRegionData] = useState<any[]>([]);
   const [monthlyOrders, setMonthlyOrders] = useState<any[]>([]);
 
-  // 👇 Yahan aapka bataya hua Link laga diya hai
-  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
-
-  const load = async () => {
+  const loadAnalytics = async () => {
     try {
-      // Direct URL use kar rahe hain
       const res = await fetch(`${BACKEND_URL}/analytics`);
-      
-      if (!res.ok) throw new Error("Failed to fetch analytics");
+      if (!res.ok) throw new Error("Failed to load analytics");
+
       const json = await res.json();
-      
-      // Convert backend format into charts format
-      const monthsFromBackend = json.monthlyOrders || [];
-      const monthMap: Record<string, number> = {};
-      monthsFromBackend.forEach((m: any) => (monthMap[m.month] = m.orders));
 
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const newSalesData = months.slice(0, 6).map((m, idx) => ({
-        month: m,
-        sales: (json.regions && json.regions[0] && json.regions[0].sales / 6) || fallbackSalesData[idx]?.sales || 0,
-        forecast: ((json.regions && json.regions[0] && json.regions[0].sales / 6) || 0) * 0.95,
-        orders: monthMap[m] ?? fallbackSalesData[idx]?.orders ?? 0,
-      }));
-
-      setSalesData(newSalesData);
-
-      if (json.categories && json.categories.length) {
-        const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
-        setCategoryData(json.categories.map((c: any, i: number) => ({ ...c, color: colors[i % colors.length] })));
-      } else {
-        setCategoryData(fallbackCategoryData);
-      }
-
-      if (json.regions && json.regions.length) {
-        setRegionData(json.regions.map((r: any) => ({ region: r.name ?? r.region, sales: r.sales, growth: r.growth })));
-      } else {
-        setRegionData(fallbackRegionData);
-      }
-
-      if (json.monthlyOrders) {
+      /* -------- Monthly Orders -------- */
+      if (json.monthlyOrders?.length) {
         setMonthlyOrders(json.monthlyOrders);
-      } else {
-        setMonthlyOrders(monthlyOrders);
       }
-    } catch (e) {
-      console.warn("Analytics load failed:", e);
+
+      /* -------- Sales vs Forecast (Derived) -------- */
+      if (json.regions?.length) {
+        const totalSales = json.regions.reduce(
+          (sum: number, r: any) => sum + r.sales,
+          0
+        );
+
+        const derived = fallbackSalesData.map((m) => ({
+          month: m.month,
+          sales: Math.round(totalSales / 6),
+          forecast: Math.round((totalSales / 6) * 0.95),
+          orders:
+            json.monthlyOrders?.find((o: any) => o.month === m.month)
+              ?.orders ?? m.orders,
+        }));
+
+        setSalesData(derived);
+      }
+
+      /* -------- Categories -------- */
+      if (json.categories?.length) {
+        setCategoryData(
+          json.categories.map((c: any, i: number) => ({
+            name: c.name,
+            value: c.value,
+            color: COLORS[i % COLORS.length],
+          }))
+        );
+      }
+
+      /* -------- Regions -------- */
+      if (json.regions?.length) {
+        setRegionData(
+          json.regions.map((r: any) => ({
+            region: r.name,
+            sales: r.sales,
+            growth: r.growth,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Using fallback analytics data", err);
     }
   };
 
   useEffect(() => {
-    load();
-    const handler = () => {
-      load();
-    };
-    window.addEventListener("data-updated", handler);
-    return () => window.removeEventListener("data-updated", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadAnalytics();
   }, []);
 
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">Comprehensive insights into your sales performance and trends</p>
-        </div>
+        <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
+        <p className="text-muted-foreground mb-6">
+          Sales insights powered by Random Forest ML model
+        </p>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="overview">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="trends">Trends</TabsTrigger>
@@ -127,39 +123,40 @@ const Analytics = () => {
             <TabsTrigger value="regions">Regions</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ---------------- Overview ---------------- */}
+          <TabsContent value="overview">
+            <div className="grid lg:grid-cols-2 gap-6">
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Sales vs Forecast</h3>
+                <h3 className="font-semibold mb-4">Sales vs Forecast</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={salesData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2} name="Actual Sales" />
-                    <Line type="monotone" dataKey="forecast" stroke="hsl(var(--accent))" strokeWidth={2} strokeDasharray="5 5" name="Forecast" />
+                    <Line dataKey="sales" stroke="hsl(var(--primary))" />
+                    <Line
+                      dataKey="forecast"
+                      stroke="hsl(var(--accent))"
+                      strokeDasharray="5 5"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>
 
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Sales by Category</h3>
+                <h3 className="font-semibold mb-4">Sales by Category</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
                       dataKey="value"
+                      outerRadius={100}
+                      label
                     >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      {categoryData.map((e, i) => (
+                        <Cell key={i} fill={e.color} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -169,49 +166,53 @@ const Analytics = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="trends" className="space-y-6">
+          {/* ---------------- Trends ---------------- */}
+          <TabsContent value="trends">
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Monthly Order Trends</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={monthlyOrders.length ? monthlyOrders : salesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-                  <Legend />
-                  <Area type="monotone" dataKey="orders" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" name="Orders" />
+              <h3 className="font-semibold mb-4">Monthly Orders</h3>
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart
+                  data={monthlyOrders.length ? monthlyOrders : salesData}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area
+                    dataKey="orders"
+                    fill="hsl(var(--primary) / 0.3)"
+                    stroke="hsl(var(--primary))"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
           </TabsContent>
 
-          <TabsContent value="categories" className="space-y-6">
+          {/* ---------------- Categories ---------------- */}
+          <TabsContent value="categories">
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Category Performance</h3>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" name="Sales Share %" radius={[8, 8, 0, 0]} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
           </TabsContent>
 
-          <TabsContent value="regions" className="space-y-6">
+          {/* ---------------- Regions ---------------- */}
+          <TabsContent value="regions">
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Regional Sales Performance</h3>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={regionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="region" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                  <XAxis dataKey="region" />
+                  <YAxis />
+                  <Tooltip />
                   <Legend />
-                  <Bar dataKey="sales" fill="hsl(var(--primary))" name="Sales ($)" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="growth" fill="hsl(var(--accent))" name="Growth (%)" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="sales" fill="hsl(var(--primary))" />
+                  <Bar dataKey="growth" fill="hsl(var(--accent))" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

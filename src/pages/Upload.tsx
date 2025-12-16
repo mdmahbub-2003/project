@@ -1,42 +1,55 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload as UploadIcon, FileSpreadsheet, FileText, CheckCircle } from "lucide-react";
+import {
+  Upload as UploadIcon,
+  FileSpreadsheet,
+  FileText,
+  CheckCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-// Note: API_BASE_URL import hata diya hai
+/* 🔗 NEW BACKEND LINK */
+const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 const Upload = () => {
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
-  // 👇 Direct Backend Link
-  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setUploading(true);
     const form = new FormData();
     form.append("file", file);
+
     try {
-      // Direct URL use kiya hai
-      const res = await fetch(`${BACKEND_URL}/upload`, { method: "POST", body: form });
+      const res = await fetch(`${BACKEND_URL}/upload`, {
+        method: "POST",
+        body: form,
+      });
+
       if (!res.ok) throw new Error("Upload failed");
-      const json = await res.json();
+
+      await res.json();
       setUploadedFile(file.name);
+
       toast({
         title: "File uploaded successfully",
-        description: `${file.name} is saved on server`,
+        description: `${file.name} has been saved on the server.`,
       });
-      // notify other pages to refresh analytics/history
+
+      // notify analytics / history pages
       window.dispatchEvent(new Event("data-updated"));
-    } catch (e) {
-      console.error("Upload error:", e);
+    } catch (err) {
+      console.error("Upload error:", err);
       toast({
         title: "Upload failed",
-        description: "Something went wrong while uploading file.",
+        description: "Something went wrong while uploading the file.",
       });
     } finally {
       setUploading(false);
@@ -48,23 +61,38 @@ const Upload = () => {
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Upload Data</h1>
-          <p className="text-muted-foreground">Import your sales data from CSV or Excel files for analysis</p>
+          <p className="text-muted-foreground">
+            Import your sales data from CSV or Excel files
+          </p>
         </div>
 
         <div className="space-y-6">
+          {/* ---------------- Upload Box ---------------- */}
           <Card className="p-8">
             <div className="border-2 border-dashed border-border rounded-lg p-12 text-center hover:border-primary transition-colors">
-              <input type="file" id="fileInput" className="hidden" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} />
+              <input
+                type="file"
+                id="fileInput"
+                className="hidden"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileUpload}
+              />
               <label htmlFor="fileInput" className="cursor-pointer">
                 <div className="flex flex-col items-center gap-4">
                   <div className="p-4 rounded-full bg-primary/10">
                     <UploadIcon className="w-12 h-12 text-primary" />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold mb-1">Drop your files here or click to browse</p>
-                    <p className="text-sm text-muted-foreground">Supported formats: CSV, XLSX, XLS</p>
+                    <p className="text-lg font-semibold mb-1">
+                      Drop your files here or click to browse
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Supported formats: CSV, XLSX, XLS
+                    </p>
                   </div>
-                  <Button type="button" disabled={uploading}>{uploading ? "Uploading..." : "Select File"}</Button>
+                  <Button type="button" disabled={uploading}>
+                    {uploading ? "Uploading..." : "Select File"}
+                  </Button>
                 </div>
               </label>
             </div>
@@ -72,14 +100,17 @@ const Upload = () => {
             {uploadedFile && (
               <div className="mt-6 p-4 bg-success/10 border border-success/20 rounded-lg flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-success" />
-                <div className="flex-1">
-                  <p className="font-medium">File uploaded</p>
-                  <p className="text-sm text-muted-foreground">{uploadedFile}</p>
+                <div>
+                  <p className="font-medium">File Uploaded</p>
+                  <p className="text-sm text-muted-foreground">
+                    {uploadedFile}
+                  </p>
                 </div>
               </div>
             )}
           </Card>
 
+          {/* ---------------- File Types ---------------- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-6">
               <div className="flex items-start gap-4">
@@ -89,7 +120,7 @@ const Upload = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Excel Files</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Upload .xlsx or .xls files with your sales data
+                    Upload .xlsx or .xls files with structured sales data
                   </p>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Multiple sheets supported</li>
@@ -107,7 +138,9 @@ const Upload = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">CSV Files</h3>
-                  <p className="text-sm text-muted-foreground mb-3">Upload comma-separated value files</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upload comma-separated value files
+                  </p>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• UTF-8 encoding preferred</li>
                     <li>• Header row required</li>
@@ -118,6 +151,7 @@ const Upload = () => {
             </Card>
           </div>
 
+          {/* ---------------- Required Columns ---------------- */}
           <Card className="p-6">
             <h3 className="font-semibold mb-4">Required Columns</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

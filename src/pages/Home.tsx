@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, Users, ShoppingCart, Target, BarChart3, Lock, RefreshCw, Database } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  ShoppingCart,
+  Target,
+  BarChart3,
+  Lock,
+  RefreshCw,
+  Database,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Note: API_BASE_URL import hata diya hai
+/* 🔗 NEW BACKEND LINK */
+const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 const Home = () => {
   const navigate = useNavigate();
+
   const [metrics, setMetrics] = useState({
     growthRate: "+0.0%",
     activeCustomers: "0",
@@ -18,83 +29,101 @@ const Home = () => {
     {
       icon: Target,
       title: "Accurate Predictions",
-      description: "Machine learning models trained on historical data for precise sales forecasting.",
+      description:
+        "Machine learning models (Random Forest) trained on historical data for precise sales forecasting.",
     },
     {
       icon: BarChart3,
       title: "Visual Analytics",
-      description: "Interactive charts and graphs to understand trends and patterns at a glance.",
+      description:
+        "Interactive charts and graphs to understand trends and patterns at a glance.",
     },
     {
       icon: Target,
       title: "Goal Tracking",
-      description: "Set targets and monitor progress with real-time updates and notifications.",
+      description:
+        "Set targets and monitor progress with real-time updates and notifications.",
     },
     {
       icon: RefreshCw,
       title: "Real-time Updates",
-      description: "Get instant insights as new data flows in, keeping you always informed.",
+      description:
+        "Get instant insights as new data flows in, keeping you always informed.",
     },
     {
       icon: Lock,
       title: "Secure & Reliable",
-      description: "Enterprise-grade security ensuring your data is protected and always available.",
+      description:
+        "Enterprise-grade security ensuring your data is protected and always available.",
     },
     {
       icon: Database,
       title: "Data Integration",
-      description: "Seamlessly import data from CSV, Excel, and other sources.",
+      description:
+        "Seamlessly import data from CSV, Excel, and other sources.",
     },
   ];
 
-  // 👇 Direct Backend Link
-  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
-
-  const load = async () => {
+  const loadMetrics = async () => {
     try {
-      // Direct URL use kar rahe hain
       const res = await fetch(`${BACKEND_URL}/analytics`);
-      
-      if (!res.ok) throw new Error("No analytics");
+      if (!res.ok) throw new Error("Analytics not available");
+
       const json = await res.json();
-      
+
       setMetrics({
         growthRate: `${json.growthRate ?? 0}%`,
         activeCustomers: (json.activeCustomers ?? 0).toLocaleString(),
         totalOrders: (json.totalOrders ?? 0).toLocaleString(),
       });
-    } catch (e) {
-      // keep defaults if backend missing
-      console.warn("Home analytics failed:", e);
+    } catch (err) {
+      console.warn("Home analytics load failed:", err);
     }
   };
 
   useEffect(() => {
-    load();
-    const handler = () => load();
+    loadMetrics();
+    const handler = () => loadMetrics();
     window.addEventListener("data-updated", handler);
     return () => window.removeEventListener("data-updated", handler);
   }, []);
 
   const metricList = [
-    { label: "Growth Rate", value: metrics.growthRate, icon: TrendingUp, color: "text-green-500" },
-    { label: "Active Customers", value: metrics.activeCustomers, icon: Users, color: "text-blue-500" },
-    { label: "Total Orders", value: metrics.totalOrders, icon: ShoppingCart, color: "text-purple-500" },
+    {
+      label: "Growth Rate",
+      value: metrics.growthRate,
+      icon: TrendingUp,
+      color: "text-green-500",
+    },
+    {
+      label: "Active Customers",
+      value: metrics.activeCustomers,
+      icon: Users,
+      color: "text-blue-500",
+    },
+    {
+      label: "Total Orders",
+      value: metrics.totalOrders,
+      icon: ShoppingCart,
+      color: "text-purple-500",
+    },
   ];
 
   return (
     <div className="min-h-screen pt-20 pb-12">
-      {/* Hero Section */}
+      {/* ---------------- Hero Section ---------------- */}
       <section className="container mx-auto px-6 py-12">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Predictive Model for Sales
+            Predictive Sales Forecasting System
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Harness the power of AI to forecast future sales, optimize inventory, and drive business growth with data-driven insights.
+            Harness the power of Machine Learning to forecast future sales,
+            optimize inventory, and drive business growth with data-driven
+            insights.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/prediction")} className="shadow-lg">
+            <Button size="lg" onClick={() => navigate("/prediction")}>
               Start Predicting
               <TrendingUp className="ml-2 w-5 h-5" />
             </Button>
@@ -105,14 +134,19 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Metrics Section */}
+      {/* ---------------- Metrics Section ---------------- */}
       <section className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {metricList.map((metric) => (
-            <Card key={metric.label} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={metric.label}
+              className="p-6 hover:shadow-lg transition-shadow"
+            >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {metric.label}
+                  </p>
                   <p className="text-3xl font-bold">{metric.value}</p>
                 </div>
                 <div className={`p-3 rounded-lg bg-secondary ${metric.color}`}>
@@ -124,23 +158,33 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* ---------------- Features Section ---------------- */}
       <section className="container mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Powerful Features</h2>
-          <p className="text-muted-foreground">Everything you need to make informed decisions about your sales strategy</p>
+          <p className="text-muted-foreground">
+            Everything you need to make informed decisions about your sales
+            strategy
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
-            <Card key={feature.title} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={feature.title}
+              className="p-6 hover:shadow-lg transition-shadow"
+            >
               <div className="flex flex-col items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10 text-primary">
                   <feature.icon className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.description}
+                  </p>
                 </div>
               </div>
             </Card>
