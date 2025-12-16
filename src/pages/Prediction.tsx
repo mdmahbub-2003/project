@@ -12,7 +12,7 @@ import {
 import { TrendingUp, Target } from "lucide-react";
 import { useState } from "react";
 
-/* 🔗 NEW BACKEND LINK (NO trailing slash) */
+/* 🔗 BACKEND LINK */
 const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 /* ---------------- Types ---------------- */
@@ -56,7 +56,6 @@ const Prediction = () => {
     setLoading(true);
 
     try {
-      /* -------- ML Prediction -------- */
       const response = await fetch(`${BACKEND_URL}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +76,6 @@ const Prediction = () => {
       const data: PredictionResult = await response.json();
       setResult(data);
 
-      /* -------- Persist Prediction -------- */
       try {
         const saveResp = await fetch(`${BACKEND_URL}/predictions`, {
           method: "POST",
@@ -93,14 +91,12 @@ const Prediction = () => {
         });
 
         if (saveResp.ok) {
-          // notify analytics & history pages
           window.dispatchEvent(new Event("data-updated"));
         }
       } catch (err) {
         console.warn("Failed to save prediction:", err);
       }
     } catch (err: any) {
-      console.error(err);
       setError(err.message || "Something went wrong while generating prediction.");
     } finally {
       setLoading(false);
@@ -110,30 +106,20 @@ const Prediction = () => {
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Sales Prediction</h1>
-          <p className="text-muted-foreground">
-            Enter product details to forecast future sales using Random Forest ML
-          </p>
-        </div>
+        <h1 className="text-4xl font-bold mb-2">Sales Prediction</h1>
+        <p className="text-muted-foreground mb-8">
+          Enter product details to forecast future sales using Random Forest ML
+        </p>
 
-        {/* ---------------- Model Info ---------------- */}
-        <Card className="mb-8 p-6 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <Card className="mb-8 p-6">
+          <div className="flex items-center gap-4">
+            <Target className="w-5 h-5 text-primary" />
             <div>
-              <p className="text-sm font-medium text-primary mb-1 flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Model Accuracy
-              </p>
-              <p className="text-4xl font-bold text-primary">
-                {modelAccuracy}
-                <span className="text-2xl align-top">%</span>
+              <p className="text-sm text-muted-foreground">Model Accuracy</p>
+              <p className="text-3xl font-bold text-primary">
+                {modelAccuracy}%
               </p>
             </div>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Accuracy based on historical data using a Random Forest regression
-              model.
-            </p>
           </div>
         </Card>
 
@@ -141,10 +127,14 @@ const Prediction = () => {
           {/* ---------------- Form ---------------- */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-6">Product Details</h2>
+
             <div className="space-y-4">
               <div>
                 <Label>Product Name</Label>
-                <Input value={productName} onChange={(e) => setProductName(e.target.value)} />
+                <Input
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                />
               </div>
 
               <div>
@@ -158,7 +148,6 @@ const Prediction = () => {
                     <SelectItem value="clothing">Clothing</SelectItem>
                     <SelectItem value="grocery">Grocery</SelectItem>
                     <SelectItem value="furniture">Furniture</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -166,11 +155,19 @@ const Prediction = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Unit Price</Label>
-                  <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+                  <Input
+                    type="number"
+                    value={unitPrice}
+                    onChange={(e) => setUnitPrice(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>Discount (%)</Label>
-                  <Input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+                  <Input
+                    type="number"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -206,13 +203,15 @@ const Prediction = () => {
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                  {error}
-                </p>
+                <p className="text-sm text-red-500">{error}</p>
               )}
 
-              <Button className="w-full" size="lg" onClick={handlePredict} disabled={loading}>
-                <TrendingUp className="mr-2 w-5 h-5" />
+              <Button
+                className="w-full"
+                onClick={handlePredict}
+                disabled={loading}
+              >
+                <TrendingUp className="mr-2 w-4 h-4" />
                 {loading ? "Generating..." : "Generate Prediction"}
               </Button>
             </div>
@@ -220,48 +219,23 @@ const Prediction = () => {
 
           {/* ---------------- Result ---------------- */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Prediction Results</h2>
+            <h2 className="text-xl font-semibold mb-6">
+              Prediction Results
+            </h2>
 
             {result ? (
-              <div className="space-y-6">
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-sm text-muted-foreground">Predicted Sales</p>
-                  <p className="text-3xl font-bold text-primary">
-                    ₹{result.predictedSales.toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-secondary rounded-lg">
-                    <p className="text-sm text-muted-foreground">Confidence</p>
-                    <p className="text-xl font-semibold">{result.confidenceLevel}</p>
-                  </div>
-                  <div className="p-4 bg-secondary rounded-lg">
-                    <p className="text-sm text-muted-foreground">Growth Trend</p>
-                    <p className="text-xl font-semibold text-emerald-500">
-                      +{result.growthTrend}%
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium mb-2">Insights</p>
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                    {result.insights.map((i, idx) => (
-                      <li key={idx}>{i}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                  <p className="text-sm font-medium text-accent">
-                    💡 Recommendation: {result.recommendation}
-                  </p>
-                </div>
+              <div className="space-y-4">
+                <p className="text-3xl font-bold text-primary">
+                  ₹{result.predictedSales.toLocaleString()}
+                </p>
+                <p>Confidence: {result.confidenceLevel}</p>
+                <p className="text-emerald-500">
+                  Growth: +{result.growthTrend}%
+                </p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Fill the form and click <b>Generate Prediction</b> to see results.
+              <p className="text-muted-foreground">
+                Fill the form to see prediction results.
               </p>
             )}
           </Card>
