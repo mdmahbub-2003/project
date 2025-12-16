@@ -65,7 +65,7 @@ const Prediction = () => {
           unitPrice: numericUnitPrice,
           discount: numericDiscount,
           region,
-          season,
+          season, // 👈 yahan ab "fall" jayega
         }),
       });
 
@@ -196,7 +196,7 @@ const Prediction = () => {
                     <SelectItem value="summer">Summer</SelectItem>
                     <SelectItem value="winter">Winter</SelectItem>
                     <SelectItem value="spring">Spring</SelectItem>
-                    <SelectItem value="autumn">Autumn</SelectItem>
+                    <SelectItem value="fall">Autumn</SelectItem>
                     <SelectItem value="monsoon">Monsoon</SelectItem>
                   </SelectContent>
                 </Select>
