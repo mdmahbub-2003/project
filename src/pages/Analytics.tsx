@@ -54,7 +54,7 @@ const Analytics = () => {
 
   /* ✅ Pie percent label helper */
   const renderPercentLabel = (entry: any, total: number) => {
-    if (!total) return entry.name;
+    if (!total) return "";
     const percent = ((entry.value / total) * 100).toFixed(1);
     return `${percent}%`;
   };
@@ -88,14 +88,37 @@ const Analytics = () => {
         setSalesData(derived);
       }
 
+      /* -------- Categories with Others -------- */
       if (json.categories?.length) {
-        setCategoryData(
-          json.categories.map((c: any, i: number) => ({
+        const sorted = [...json.categories].sort(
+          (a: any, b: any) => b.value - a.value
+        );
+
+        const topCategories = sorted.slice(0, 4);
+        const others = sorted.slice(4);
+
+        const othersValue = others.reduce(
+          (sum: number, c: any) => sum + c.value,
+          0
+        );
+
+        const finalCategories = [
+          ...topCategories.map((c: any, i: number) => ({
             name: c.name,
             value: c.value,
             color: COLORS[i % COLORS.length],
-          }))
-        );
+          })),
+        ];
+
+        if (othersValue > 0) {
+          finalCategories.push({
+            name: "Others",
+            value: othersValue,
+            color: "hsl(var(--muted-foreground))",
+          });
+        }
+
+        setCategoryData(finalCategories);
       }
 
       if (json.regions?.length) {
