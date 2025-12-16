@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
 import {
   LineChart,
   Line,
@@ -19,7 +25,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* 🔗 NEW BACKEND LINK */
+/* 🔗 BACKEND LINK */
 const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 /* ---------------- Fallback Data ---------------- */
@@ -46,6 +52,13 @@ const Analytics = () => {
   const [regionData, setRegionData] = useState<any[]>([]);
   const [monthlyOrders, setMonthlyOrders] = useState<any[]>([]);
 
+  /* ✅ Percent label helper */
+  const renderPercentLabel = (entry: any, total: number) => {
+    if (!total) return entry.name;
+    const percent = ((entry.value / total) * 100).toFixed(1);
+    return `${entry.name} (${percent}%)`;
+  };
+
   const loadAnalytics = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/analytics`);
@@ -53,12 +66,10 @@ const Analytics = () => {
 
       const json = await res.json();
 
-      /* -------- Monthly Orders -------- */
       if (json.monthlyOrders?.length) {
         setMonthlyOrders(json.monthlyOrders);
       }
 
-      /* -------- Sales vs Forecast (Derived) -------- */
       if (json.regions?.length) {
         const totalSales = json.regions.reduce(
           (sum: number, r: any) => sum + r.sales,
@@ -77,7 +88,6 @@ const Analytics = () => {
         setSalesData(derived);
       }
 
-      /* -------- Categories -------- */
       if (json.categories?.length) {
         setCategoryData(
           json.categories.map((c: any, i: number) => ({
@@ -88,7 +98,6 @@ const Analytics = () => {
         );
       }
 
-      /* -------- Regions -------- */
       if (json.regions?.length) {
         setRegionData(
           json.regions.map((r: any) => ({
@@ -146,22 +155,33 @@ const Analytics = () => {
               </Card>
 
               <Card className="p-6">
-                <h3 className="font-semibold mb-4">Sales by Category</h3>
+                <h3 className="font-semibold mb-4">Sales by Category (%)</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={categoryData}
                       dataKey="value"
-                      outerRadius={100}
-                      label={({ percent }) =>
-                        `${(percent * 100).toFixed(0)}%`
+                      outerRadius={110}
+                      label={(entry) =>
+                        renderPercentLabel(
+                          entry,
+                          categoryData.reduce((s, c) => s + c.value, 0)
+                        )
                       }
                     >
                       {categoryData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value: number) => {
+                        const total = categoryData.reduce(
+                          (s, c) => s + c.value,
+                          0
+                        );
+                        return `${((value / total) * 100).toFixed(1)}%`;
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Card>
@@ -197,7 +217,9 @@ const Analytics = () => {
                 <BarChart data={categoryData}>
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value: number) => `${value}%`}
+                  />
                   <Bar dataKey="value" fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
@@ -212,7 +234,7 @@ const Analytics = () => {
                   <XAxis dataKey="region" />
                   <YAxis />
                   <Tooltip />
-                  {/* ❌ Legend removed */}
+                  <Legend />
                   <Bar dataKey="sales" fill="hsl(var(--primary))" />
                   <Bar dataKey="growth" fill="hsl(var(--accent))" />
                 </BarChart>
