@@ -19,10 +19,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* 🔗 NEW BACKEND LINK */
 const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
-/* ---------------- Fallback Data ---------------- */
 const fallbackSalesData = [
   { month: "Jan", sales: 12000, forecast: 11500, orders: 200 },
   { month: "Feb", sales: 15000, forecast: 14500, orders: 260 },
@@ -40,6 +38,15 @@ const COLORS = [
   "hsl(var(--chart-5))",
 ];
 
+/* 🔥 Percentage Converter */
+const convertCategoriesToPercentage = (categories: any[]) => {
+  const total = categories.reduce((sum, c) => sum + c.value, 0);
+  return categories.map((c) => ({
+    ...c,
+    value: total ? Number(((c.value / total) * 100).toFixed(1)) : 0,
+  }));
+};
+
 const Analytics = () => {
   const [salesData, setSalesData] = useState<any[]>(fallbackSalesData);
   const [categoryData, setCategoryData] = useState<any[]>([]);
@@ -50,37 +57,34 @@ const Analytics = () => {
     try {
       const res = await fetch(`${BACKEND_URL}/analytics`);
       if (!res.ok) throw new Error("Failed to load analytics");
-
       const json = await res.json();
 
-      /* -------- Monthly Orders -------- */
       if (json.monthlyOrders?.length) {
         setMonthlyOrders(json.monthlyOrders);
       }
 
-      /* -------- Sales vs Forecast (Derived) -------- */
       if (json.regions?.length) {
         const totalSales = json.regions.reduce(
           (sum: number, r: any) => sum + r.sales,
           0
         );
 
-        const derived = fallbackSalesData.map((m) => ({
-          month: m.month,
-          sales: Math.round(totalSales / 6),
-          forecast: Math.round((totalSales / 6) * 0.95),
-          orders:
-            json.monthlyOrders?.find((o: any) => o.month === m.month)
-              ?.orders ?? m.orders,
-        }));
-
-        setSalesData(derived);
+        setSalesData(
+          fallbackSalesData.map((m) => ({
+            month: m.month,
+            sales: Math.round(totalSales / 6),
+            forecast: Math.round((totalSales / 6) * 0.95),
+            orders:
+              json.monthlyOrders?.find((o: any) => o.month === m.month)
+                ?.orders ?? m.orders,
+          }))
+        );
       }
 
-      /* -------- Categories -------- */
       if (json.categories?.length) {
+        const percentCategories = convertCategoriesToPercentage(json.categories);
         setCategoryData(
-          json.categories.map((c: any, i: number) => ({
+          percentCategories.map((c: any, i: number) => ({
             name: c.name,
             value: c.value,
             color: COLORS[i % COLORS.length],
@@ -88,7 +92,6 @@ const Analytics = () => {
         );
       }
 
-      /* -------- Regions -------- */
       if (json.regions?.length) {
         setRegionData(
           json.regions.map((r: any) => ({
@@ -111,9 +114,6 @@ const Analytics = () => {
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 py-8">
         <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
-        <p className="text-muted-foreground mb-6">
-          Sales insights powered by Random Forest ML model
-        </p>
 
         <Tabs defaultValue="overview">
           <TabsList>
@@ -123,11 +123,9 @@ const Analytics = () => {
             <TabsTrigger value="regions">Regions</TabsTrigger>
           </TabsList>
 
-          {/* ---------------- Overview ---------------- */}
           <TabsContent value="overview">
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="p-6">
-                <h3 className="font-semibold mb-4">Sales vs Forecast</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={salesData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -146,76 +144,23 @@ const Analytics = () => {
               </Card>
 
               <Card className="p-6">
-                <h3 className="font-semibold mb-4">Sales by Category</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={categoryData}
                       dataKey="value"
                       outerRadius={100}
-                      label
+                      label={({ name, value }) => `${name} ${value}%`}
                     >
                       {categoryData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip formatter={(v) => `${v}%`} />
                   </PieChart>
                 </ResponsiveContainer>
               </Card>
             </div>
-          </TabsContent>
-
-          {/* ---------------- Trends ---------------- */}
-          <TabsContent value="trends">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Monthly Orders</h3>
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart
-                  data={monthlyOrders.length ? monthlyOrders : salesData}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    dataKey="orders"
-                    fill="hsl(var(--primary) / 0.3)"
-                    stroke="hsl(var(--primary))"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
-          </TabsContent>
-
-          {/* ---------------- Categories ---------------- */}
-          <TabsContent value="categories">
-            <Card className="p-6">
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={categoryData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </TabsContent>
-
-          {/* ---------------- Regions ---------------- */}
-          <TabsContent value="regions">
-            <Card className="p-6">
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={regionData}>
-                  <XAxis dataKey="region" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="sales" fill="hsl(var(--primary))" />
-                  <Bar dataKey="growth" fill="hsl(var(--accent))" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
