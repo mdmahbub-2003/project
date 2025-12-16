@@ -1,10 +1,9 @@
-// src/pages/Home.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, Users, ShoppingCart, Target, BarChart3, Lock, RefreshCw, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/lib/api";
+// Fix: Removed unused API_BASE_URL import to prevent linting errors
 
 const Home = () => {
   const navigate = useNavigate();
@@ -49,9 +48,12 @@ const Home = () => {
 
   const load = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/analytics`);
+      // Fix: Direct clean string URL (No ${} or variables needed)
+      const res = await fetch("https://project-backend-lfn1.onrender.com/analytics");
+      
       if (!res.ok) throw new Error("No analytics");
       const json = await res.json();
+      
       setMetrics({
         growthRate: `${json.growthRate ?? 0}%`,
         activeCustomers: (json.activeCustomers ?? 0).toLocaleString(),
@@ -71,9 +73,10 @@ const Home = () => {
   }, []);
 
   const metricList = [
-    { label: "Growth Rate", value: metrics.growthRate, icon: TrendingUp, color: "text-success" },
-    { label: "Active Customers", value: metrics.activeCustomers, icon: Users, color: "text-primary" },
-    { label: "Total Orders", value: metrics.totalOrders, icon: ShoppingCart, color: "text-accent" },
+    // Fix: Used standard Tailwind colors (green-500, blue-500) instead of custom names that might not exist
+    { label: "Growth Rate", value: metrics.growthRate, icon: TrendingUp, color: "text-green-500" },
+    { label: "Active Customers", value: metrics.activeCustomers, icon: Users, color: "text-blue-500" },
+    { label: "Total Orders", value: metrics.totalOrders, icon: ShoppingCart, color: "text-purple-500" },
   ];
 
   return (
