@@ -1,4 +1,3 @@
-// src/pages/Prediction.tsx
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, Target } from "lucide-react";
 import { useState } from "react";
-import { API_BASE_URL } from "@/lib/api";
+
+// NOTE: Humne API_BASE_URL hata diya hai aur direct link use kiya hai
 
 type PredictionResult = {
   predictedSales: number;
@@ -29,6 +29,9 @@ const Prediction = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PredictionResult | null>(null);
 
+  // 👇 Yahan apna Render URL confirm kar lena (slash / end me nahi hona chahiye)
+  const BACKEND_URL = "https://sales-backend.onrender.com";
+
   const handlePredict = async () => {
     setError(null);
 
@@ -48,8 +51,8 @@ const Prediction = () => {
     setLoading(true);
 
     try {
-      // call model endpoint (keeps existing behavior)
-      const response = await fetch(`${API_BASE_URL}/predict`, {
+      // FIX: Direct URL use kiya hai
+      const response = await fetch(`${BACKEND_URL}/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,9 +74,9 @@ const Prediction = () => {
       const data: PredictionResult = await response.json();
       setResult(data);
 
-      // persist the prediction (server will recompute same model and save to DB)
+      // Persist the prediction (Save to Database)
       try {
-        const saveResp = await fetch(`${API_BASE_URL}/predictions`, {
+        const saveResp = await fetch(`${BACKEND_URL}/predictions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
