@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* 🔗 NEW BACKEND LINK */
+/* 🔗 BACKEND LINK (AS GIVEN BY YOU) */
 const BACKEND_URL = "https://project-backend-new-amsy.onrender.com";
 
 /* ---------------- Fallback Data ---------------- */
@@ -40,15 +40,6 @@ const COLORS = [
   "hsl(var(--chart-5))",
 ];
 
-/* 🔥 Convert category values to percentage */
-const convertCategoriesToPercentage = (categories: any[]) => {
-  const total = categories.reduce((sum, c) => sum + c.value, 0);
-  return categories.map((c) => ({
-    ...c,
-    value: total ? Number(((c.value / total) * 100).toFixed(1)) : 0,
-  }));
-};
-
 const Analytics = () => {
   const [salesData, setSalesData] = useState<any[]>(fallbackSalesData);
   const [categoryData, setCategoryData] = useState<any[]>([]);
@@ -57,8 +48,14 @@ const Analytics = () => {
 
   const loadAnalytics = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/analytics`);
-      if (!res.ok) throw new Error("Failed to load analytics");
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 15000); // Render sleep safety
+
+      const res = await fetch(`${BACKEND_URL}/analytics`, {
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error("Backend not responding");
 
       const json = await res.json();
 
@@ -88,11 +85,15 @@ const Analytics = () => {
 
       /* -------- Categories (PERCENTAGE) -------- */
       if (json.categories?.length) {
-        const percentCategories = convertCategoriesToPercentage(json.categories);
+        const total = json.categories.reduce(
+          (s: number, c: any) => s + c.value,
+          0
+        );
+
         setCategoryData(
-          percentCategories.map((c: any, i: number) => ({
+          json.categories.map((c: any, i: number) => ({
             name: c.name,
-            value: c.value,
+            value: total ? Number(((c.value / total) * 100).toFixed(1)) : 0,
             color: COLORS[i % COLORS.length],
           }))
         );
@@ -109,7 +110,7 @@ const Analytics = () => {
         );
       }
     } catch (err) {
-      console.warn("Using fallback analytics data", err);
+      console.warn("Backend unreachable, using fallback data", err);
     }
   };
 
@@ -181,7 +182,9 @@ const Analytics = () => {
             <Card className="p-6">
               <h3 className="font-semibold mb-4">Monthly Orders</h3>
               <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={monthlyOrders.length ? monthlyOrders : salesData}>
+                <AreaChart
+                  data={monthlyOrders.length ? monthlyOrders : salesData}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
