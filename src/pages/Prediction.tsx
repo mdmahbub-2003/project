@@ -30,7 +30,7 @@ const Prediction = () => {
   const [result, setResult] = useState<PredictionResult | null>(null);
 
   // 👇 Yahan apna Render URL confirm kar lena (slash / end me nahi hona chahiye)
-  const BACKEND_URL = "https://sales-backend.onrender.com";
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
 
   const handlePredict = async () => {
     setError(null);
