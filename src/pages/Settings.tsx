@@ -1,4 +1,3 @@
-// src/pages/Settings.tsx
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { API_BASE_URL } from "@/lib/api";
+
+// Note: API_BASE_URL import hata diya hai
 
 const Settings = () => {
   const { toast } = useToast();
@@ -20,9 +20,12 @@ const Settings = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // 👇 Direct Backend Link
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
+
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/settings`);
+      const res = await fetch(`${BACKEND_URL}/settings`);
       if (!res.ok) throw new Error("Failed to fetch settings");
       const json = await res.json();
       const p = json.payload ?? json;
@@ -50,7 +53,7 @@ const Settings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/settings`, {
+      const res = await fetch(`${BACKEND_URL}/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload }),

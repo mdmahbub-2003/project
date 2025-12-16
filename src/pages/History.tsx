@@ -1,9 +1,9 @@
-// src/pages/History.tsx
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
+
+// Note: API_BASE_URL import hata diya hai
 
 type PredictionRow = {
   id: number;
@@ -19,18 +19,30 @@ type PredictionRow = {
   growthTrend?: number; // percent
   insights?: string[];
   recommendation?: string;
+  // mapped fields for UI
+  date?: string;
+  product?: string;
+  predicted?: number;
+  actual?: number;
+  accuracy?: number;
+  trend?: "up" | "down" | "neutral";
 };
 
 const History = () => {
   const [predictions, setPredictions] = useState<PredictionRow[]>([]);
   const [avgAccuracy, setAvgAccuracy] = useState<number | null>(null);
 
+  // 👇 Direct Backend Link
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
+
   const load = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/predictions`);
+      const res = await fetch(`${BACKEND_URL}/predictions`);
+      
       if (!res.ok) throw new Error("Failed to fetch predictions");
       const json = await res.json();
-      // json is array of saved predictions; we need to map to UI fields (date, product, predicted, actual not available)
+      
+      // json is array of saved predictions; we need to map to UI fields
       setPredictions(
         json.map((p: any) => ({
           id: p.id,
@@ -49,9 +61,8 @@ const History = () => {
         }))
       );
 
-      // compute average accuracy from confidenceLevel/growthTrend heuristics (since actual not present)
+      // compute average accuracy from confidenceLevel/growthTrend heuristics
       if (json.length) {
-        // if entries have 'growthTrend' as percent number (like 5) use it to estimate
         const avg = json.reduce((acc: number, cur: any) => {
           const g = Number(cur.growthTrend ?? cur.growth ?? 5);
           // convert into an accuracy-like score for display (heuristic)
@@ -72,9 +83,10 @@ const History = () => {
     const handler = () => load();
     window.addEventListener("data-updated", handler);
     return () => window.removeEventListener("data-updated", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = (trend: string | undefined) => {
     switch (trend) {
       case "up":
         return <TrendingUp className="w-4 h-4" />;
@@ -85,12 +97,12 @@ const History = () => {
     }
   };
 
-  const getTrendColor = (trend: string) => {
+  const getTrendColor = (trend: string | undefined) => {
     switch (trend) {
       case "up":
-        return "text-success";
+        return "text-green-500";
       case "down":
-        return "text-destructive";
+        return "text-red-500";
       default:
         return "text-muted-foreground";
     }
@@ -127,7 +139,7 @@ const History = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">{prediction.product}</h3>
-                    <Badge variant="secondary">{(prediction as any).date ?? "-"}</Badge>
+                    <Badge variant="secondary">{prediction.date ?? "-"}</Badge>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -142,7 +154,7 @@ const History = () => {
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Accuracy</p>
                       <div className="flex items-center gap-2">
-                        <p className="text-xl font-semibold">{(prediction as any).accuracy ?? "—"}%</p>
+                        <p className="text-xl font-semibold">{prediction.accuracy ?? "—"}%</p>
                         <div className={getTrendColor(prediction.trend)}>{getTrendIcon(prediction.trend)}</div>
                       </div>
                     </div>
@@ -150,8 +162,8 @@ const History = () => {
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  <Badge variant={(prediction as any).accuracy >= 95 ? "default" : "secondary"}>
-                    {(prediction as any).accuracy >= 95 ? "High Accuracy" : "Good"}
+                  <Badge variant={(prediction.accuracy || 0) >= 95 ? "default" : "secondary"}>
+                    {(prediction.accuracy || 0) >= 95 ? "High Accuracy" : "Good"}
                   </Badge>
                 </div>
               </div>

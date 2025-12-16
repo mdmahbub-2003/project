@@ -1,15 +1,18 @@
-// src/pages/Upload.tsx
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload as UploadIcon, FileSpreadsheet, FileText, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { API_BASE_URL } from "@/lib/api";
+
+// Note: API_BASE_URL import hata diya hai
 
 const Upload = () => {
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+
+  // 👇 Direct Backend Link
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,7 +21,8 @@ const Upload = () => {
     const form = new FormData();
     form.append("file", file);
     try {
-      const res = await fetch(`${API_BASE_URL}/upload`, { method: "POST", body: form });
+      // Direct URL use kiya hai
+      const res = await fetch(`${BACKEND_URL}/upload`, { method: "POST", body: form });
       if (!res.ok) throw new Error("Upload failed");
       const json = await res.json();
       setUploadedFile(file.name);

@@ -1,4 +1,3 @@
-// src/pages/Analytics.tsx
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +18,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { API_BASE_URL } from "@/lib/api";
+
+// NOTE: Humne API_BASE_URL import hata diya hai aur direct link use karenge
 
 const fallbackSalesData = [
   { month: "Jan", sales: 12400, forecast: 11800, orders: 245 },
@@ -52,18 +52,22 @@ const Analytics = () => {
   const [regionData, setRegionData] = useState<any[]>(fallbackRegionData);
   const [monthlyOrders, setMonthlyOrders] = useState<any[]>([]);
 
+  // 👇 Yahan aapka bataya hua Link laga diya hai
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
+
   const load = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/analytics`);
+      // Direct URL use kar rahe hain
+      const res = await fetch(`${BACKEND_URL}/analytics`);
+      
       if (!res.ok) throw new Error("Failed to fetch analytics");
       const json = await res.json();
+      
       // Convert backend format into charts format
-      // monthlyOrders -> salesData.orders if months match, otherwise area chart uses monthlyOrders
       const monthsFromBackend = json.monthlyOrders || [];
       const monthMap: Record<string, number> = {};
       monthsFromBackend.forEach((m: any) => (monthMap[m.month] = m.orders));
 
-      // Build simple salesData array for line/area charts:
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const newSalesData = months.slice(0, 6).map((m, idx) => ({
         month: m,
@@ -74,30 +78,25 @@ const Analytics = () => {
 
       setSalesData(newSalesData);
 
-      // categories: backend returns [{name, value}, ...]
       if (json.categories && json.categories.length) {
-        // try to assign colors using CSS variables
         const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
         setCategoryData(json.categories.map((c: any, i: number) => ({ ...c, color: colors[i % colors.length] })));
       } else {
         setCategoryData(fallbackCategoryData);
       }
 
-      // regions: backend returns [{name, sales, growth}, ...] or [{region, sales, growth}]
       if (json.regions && json.regions.length) {
         setRegionData(json.regions.map((r: any) => ({ region: r.name ?? r.region, sales: r.sales, growth: r.growth })));
       } else {
         setRegionData(fallbackRegionData);
       }
 
-      // monthlyOrders raw for area chart
       if (json.monthlyOrders) {
         setMonthlyOrders(json.monthlyOrders);
       } else {
         setMonthlyOrders(monthlyOrders);
       }
     } catch (e) {
-      // network issue or no backend — keep fallbacks
       console.warn("Analytics load failed:", e);
     }
   };
@@ -105,7 +104,6 @@ const Analytics = () => {
   useEffect(() => {
     load();
     const handler = () => {
-      // small debounce-ish: reload when data-updated happens
       load();
     };
     window.addEventListener("data-updated", handler);

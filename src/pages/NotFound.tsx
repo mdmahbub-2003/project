@@ -1,5 +1,6 @@
 // src/pages/NotFound.tsx
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button"; // UI consistency ke liye button import kiya
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -14,19 +15,19 @@ const NotFound = () => {
         </p>
 
         <div className="flex items-center justify-center gap-4">
-          <button
+          <Button
             onClick={() => navigate("/")}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             Go to Home
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
             onClick={() => navigate(-1)}
-            className="px-4 py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             Go Back
-          </button>
+          </Button>
         </div>
       </div>
     </div>
