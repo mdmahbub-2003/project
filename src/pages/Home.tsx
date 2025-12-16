@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { TrendingUp, Users, ShoppingCart, Target, BarChart3, Lock, RefreshCw, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Note: API_BASE_URL import hata diya hai
+
 const Home = () => {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState({
@@ -45,10 +47,13 @@ const Home = () => {
     },
   ];
 
+  // 👇 Direct Backend Link
+  const BACKEND_URL = "https://project-backend-lfn1.onrender.com";
+
   const load = async () => {
     try {
-      // Backend URL
-      const res = await fetch("https://sales-backend.onrender.com/analytics");
+      // Direct URL use kar rahe hain
+      const res = await fetch(`${BACKEND_URL}/analytics`);
       
       if (!res.ok) throw new Error("No analytics");
       const json = await res.json();
@@ -59,6 +64,7 @@ const Home = () => {
         totalOrders: (json.totalOrders ?? 0).toLocaleString(),
       });
     } catch (e) {
+      // keep defaults if backend missing
       console.warn("Home analytics failed:", e);
     }
   };
