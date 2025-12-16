@@ -52,11 +52,11 @@ const Analytics = () => {
   const [regionData, setRegionData] = useState<any[]>([]);
   const [monthlyOrders, setMonthlyOrders] = useState<any[]>([]);
 
-  /* ✅ Percent label helper */
+  /* ✅ Pie percent label helper */
   const renderPercentLabel = (entry: any, total: number) => {
     if (!total) return entry.name;
     const percent = ((entry.value / total) * 100).toFixed(1);
-    return `${entry.name} (${percent}%)`;
+    return `${percent}%`;
   };
 
   const loadAnalytics = async () => {
@@ -116,6 +116,11 @@ const Analytics = () => {
     loadAnalytics();
   }, []);
 
+  const totalCategoryValue = categoryData.reduce(
+    (s, c) => s + c.value,
+    0
+  );
+
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 py-8">
@@ -155,7 +160,9 @@ const Analytics = () => {
               </Card>
 
               <Card className="p-6">
-                <h3 className="font-semibold mb-4">Sales by Category (%)</h3>
+                <h3 className="font-semibold mb-4">
+                  Sales by Category (%)
+                </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -163,10 +170,7 @@ const Analytics = () => {
                       dataKey="value"
                       outerRadius={110}
                       label={(entry) =>
-                        renderPercentLabel(
-                          entry,
-                          categoryData.reduce((s, c) => s + c.value, 0)
-                        )
+                        renderPercentLabel(entry, totalCategoryValue)
                       }
                     >
                       {categoryData.map((e, i) => (
@@ -174,13 +178,11 @@ const Analytics = () => {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => {
-                        const total = categoryData.reduce(
-                          (s, c) => s + c.value,
-                          0
-                        );
-                        return `${((value / total) * 100).toFixed(1)}%`;
-                      }}
+                      formatter={(value: number) =>
+                        `${((value / totalCategoryValue) * 100).toFixed(
+                          1
+                        )}%`
+                      }
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -210,16 +212,14 @@ const Analytics = () => {
             </Card>
           </TabsContent>
 
-          {/* ---------------- Categories ---------------- */}
+          {/* ---------------- Categories (BAR – NORMAL VALUES) ---------------- */}
           <TabsContent value="categories">
             <Card className="p-6">
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={categoryData}>
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip
-                    formatter={(value: number) => `${value}%`}
-                  />
+                  <Tooltip />
                   <Bar dataKey="value" fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
