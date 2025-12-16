@@ -65,7 +65,7 @@ const Prediction = () => {
           unitPrice: numericUnitPrice,
           discount: numericDiscount,
           region,
-          season, // 👈 yahan ab "fall" jayega
+          season, // 👈 ab sirf valid seasons jayenge
         }),
       });
 
@@ -76,6 +76,7 @@ const Prediction = () => {
       const data: PredictionResult = await response.json();
       setResult(data);
 
+      /* -------- Save Prediction -------- */
       try {
         const saveResp = await fetch(`${BACKEND_URL}/predictions`, {
           method: "POST",
@@ -97,7 +98,9 @@ const Prediction = () => {
         console.warn("Failed to save prediction:", err);
       }
     } catch (err: any) {
-      setError(err.message || "Something went wrong while generating prediction.");
+      setError(
+        err.message || "Something went wrong while generating prediction."
+      );
     } finally {
       setLoading(false);
     }
@@ -196,7 +199,6 @@ const Prediction = () => {
                     <SelectItem value="summer">Summer</SelectItem>
                     <SelectItem value="winter">Winter</SelectItem>
                     <SelectItem value="spring">Spring</SelectItem>
-                    <SelectItem value="fall">Autumn</SelectItem>
                     <SelectItem value="monsoon">Monsoon</SelectItem>
                   </SelectContent>
                 </Select>
